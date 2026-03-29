@@ -37,7 +37,11 @@ allowed-tools:
 - **BLOCKED** — 关键步骤无法继续（如 Python 依赖缺失且用户拒绝安装）
 - **NEEDS_CONTEXT** — 需要用户提供信息才能继续（如首次设置需要公众号名称）
 
-**路径约定**：本文档中 `{skill_dir}` 指本 SKILL.md 所在的目录（即 WeWrite 的根目录）。
+**路径约定**：
+- `{skill_dir}` 指本 SKILL.md 所在的目录（即 WeWrite 的根目录）
+- `{client_dir}` 指 `{skill_dir}/clients/{client}/`（多客户模式，见 Step 1）
+- 客户级文件（style.yaml、history.yaml、playbook.md）在 `{client_dir}` 下
+- 共享文件（references/、personas/、scripts/、toolkit/）在 `{skill_dir}` 下
 
 **进度追踪**：执行主管道前，必须用 TaskCreate 创建以下任务清单，逐步标记完成，防止漏掉步骤：
 
@@ -63,9 +67,24 @@ Step 8: 收尾（写入历史 + 回复用户）
 
 ## 主管道（Step 1-8）
 
-### Step 1: 环境 + 配置
+### Step 1: 客户 + 环境 + 配置
 
-**1a. 环境检查**（静默通过或引导修复）：
+**1a. 确定客户**：
+
+从用户消息中提取客户名称，检查 `{skill_dir}/clients/{client}/` 目录是否存在。
+
+```
+检查: {skill_dir}/clients/
+```
+
+- 用户指定了客户名 → 使用该客户目录
+- 用户未指定但只有一个客户 → 自动使用
+- 用户未指定且有多个客户 → 列出可用客户，请用户选择
+- 客户目录不存在 → 引导创建（参考 `{skill_dir}/references/onboard.md`）
+
+确定客户后，设 `{client_dir} = {skill_dir}/clients/{client}/`。
+
+**1b. 环境检查**（静默通过或引导修复）：
 
 ```bash
 python3 -c "import markdown, bs4, cssutils, requests, yaml, pygments, PIL" 2>&1
@@ -73,15 +92,15 @@ python3 -c "import markdown, bs4, cssutils, requests, yaml, pygments, PIL" 2>&1
 
 | 检查项 | 通过 | 不通过 |
 |--------|------|--------|
-| `config.yaml` 存在 | 静默 | 引导创建，或设 `skip_publish = true` |
+| `config.yaml` 或 `{client_dir}/style.yaml` 中有 `wechat` 配置 | 静默 | 引导创建，或设 `skip_publish = true` |
 | Python 依赖 | 静默 | 提供 `pip install -r requirements.txt` |
 | `wechat.appid` + `secret` | 静默 | 设 `skip_publish = true` |
 | `image.api_key` | 静默 | 设 `skip_image_gen = true` |
 
-**1b. 加载风格**：
+**1c. 加载风格**：
 
 ```
-检查: {skill_dir}/style.yaml
+检查: {client_dir}/style.yaml
 ```
 
 - 存在 → 提取 `name`、`topics`、`tone`、`voice`、`blacklist`、`theme`、`cover_style`、`author`、`content_style`
@@ -104,7 +123,7 @@ python3 {skill_dir}/scripts/fetch_hotspots.py --limit 30
 **2b. 历史去重 + SEO**：
 
 ```
-读取: {skill_dir}/history.yaml（不存在则跳过）
+读取: {client_dir}/history.yaml（不存在则跳过）
 ```
 
 ```bash
@@ -155,8 +174,8 @@ WebSearch: "{选题关键词} 数据 报告 2025 2026"
 
 ```
 读取: {skill_dir}/references/writing-guide.md
-读取: {skill_dir}/playbook.md（如果存在，逐条执行，优先于 writing-guide）
-读取: {skill_dir}/history.yaml（最近 3 篇的 dimensions 字段）
+读取: {client_dir}/playbook.md（如果存在，逐条执行，优先于 writing-guide）
+读取: {client_dir}/history.yaml（最近 3 篇的 dimensions 字段）
 ```
 
 **4a. 维度随机化**：从 writing-guide.md 第 7 层维度池随机激活 2-3 个维度，对比历史去重。
@@ -180,7 +199,7 @@ WebSearch: "{选题关键词} 数据 报告 2025 2026"
 - 2-3 个编辑锚点：`<!-- ✏️ 编辑建议：在这里加一句你自己的经历/看法 -->`
 - 可选容器语法：`:::dialogue`、`:::timeline`、`:::callout`、`:::quote`
 
-保存到 `{skill_dir}/output/{date}-{slug}.md`
+保存到 `{client_dir}/output/{date}-{slug}.md`
 
 ---
 
@@ -250,9 +269,13 @@ WebSearch: "{选题关键词} 数据 报告 2025 2026"
 
 Converter 自动处理：CJK 加空格、加粗标点外移、列表转 section、外链转脚注、暗黑模式、容器语法。
 
+**发布前处理**：从 Markdown 中移除仅供内部使用的内容（如备选标题评估表、编辑锚点注释），这些不应推送到公众号。
+
+**多客户：指定 appid/secret**：`config.yaml` 中是默认账号，如果当前客户的 `style.yaml` 中有独立的 `wechat.appid` 和 `wechat.secret`，必须用 `--appid` 和 `--secret` 参数覆盖，确保推送到正确的公众号。
+
 ```bash
-# 发布
-python3 {skill_dir}/toolkit/cli.py publish {markdown} --cover {cover} --theme {theme} --title "{title}"
+# 发布（多客户时带 --appid --secret --digest）
+python3 {skill_dir}/toolkit/cli.py publish {markdown} --cover {cover} --theme {theme} --title "{title}" --digest "{Step 5 生成的摘要}" --appid "{appid}" --secret "{secret}" --author "{author}"
 
 # 降级：本地预览
 python3 {skill_dir}/toolkit/cli.py preview {markdown} --theme {theme} --no-open -o {output}.html
@@ -265,7 +288,7 @@ python3 {skill_dir}/toolkit/cli.py preview {markdown} --theme {theme} --no-open 
 **8a. 写入历史**（推送成功或降级都要写，文件不存在则创建）：
 
 ```yaml
-# → {skill_dir}/history.yaml
+# → {client_dir}/history.yaml
 - date: "{日期}"
   title: "{标题}"
   topic_source: "热点抓取"  # 或 "用户指定"
