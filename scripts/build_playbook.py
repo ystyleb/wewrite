@@ -2,29 +2,28 @@
 """
 Build a writing playbook from historical articles.
 
-Reads all .md files in corpus/, analyzes writing patterns
+Reads all .md files in a client's corpus/, analyzes writing patterns
 in batches via LLM, and outputs a structured playbook.md.
 
 Usage:
     python3 build_playbook.py
+    python3 build_playbook.py --client winson
     python3 build_playbook.py --batch-size 10
 
 Requires: ANTHROPIC_API_KEY or ARK API key in environment/config.
 This script outputs analysis prompts to stdout for the Agent (LLM) to process.
-The Agent reads the output and generates playbook.md.
+The Agent reads the output and generates the client's playbook.md.
 """
 
 import argparse
 import json
 import sys
-from pathlib import Path
 
-SKILL_DIR = Path(__file__).parent.parent
+from client_context import resolve_client_context
 
 
-def load_corpus() -> list[dict]:
+def load_corpus(corpus_dir) -> list[dict]:
     """Load all markdown files from corpus directory."""
-    corpus_dir = SKILL_DIR / "corpus"
     if not corpus_dir.exists():
         print(f"Error: corpus directory not found: {corpus_dir}", file=sys.stderr)
         sys.exit(1)
@@ -108,14 +107,23 @@ def output_analysis_prompt(articles: list[dict], stats: dict, batch_idx: int, to
 
 def main():
     parser = argparse.ArgumentParser(description="Build writing playbook from corpus")
+    parser.add_argument("--client", help="Client name under clients/<client>")
     parser.add_argument("--batch-size", type=int, default=10, help="Articles per batch")
     parser.add_argument("--stats-only", action="store_true", help="Only show corpus stats")
     args = parser.parse_args()
 
+    try:
+        client_ctx = resolve_client_context(args.client, purpose="build playbook")
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
     # Load corpus
-    articles = load_corpus()
+    corpus_dir = client_ctx.path("corpus")
+    playbook_path = client_ctx.path("playbook.md")
+    articles = load_corpus(corpus_dir)
     if not articles:
-        print("Error: no articles found in corpus/", file=sys.stderr)
+        print(f"Error: no articles found in {corpus_dir}", file=sys.stderr)
         sys.exit(1)
 
     # Compute stats
@@ -124,6 +132,10 @@ def main():
     print("=" * 60)
     print("CORPUS ANALYSIS")
     print("=" * 60)
+    print(
+        f"Client: {client_ctx.name}"
+        f"{' (legacy root layout)' if client_ctx.is_legacy else ''}"
+    )
     print(json.dumps(stats, ensure_ascii=False, indent=2))
 
     if args.stats_only:
@@ -187,6 +199,7 @@ Read all articles below, then generate playbook.md with these sections:
 - 风格关键词
 
 请用量化数据（百分比、平均值、范围）支撑每个结论，不要只做定性描述。
+最终文件路径：{playbook_path}
 """)
 
     # Output article batches

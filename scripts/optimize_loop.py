@@ -6,12 +6,13 @@ Inspired by Karpathy's autoresearch: change → score → keep/rollback → repe
 But instead of optimizing ML training code, we optimize WRITING RULES to
 produce articles that pass AI detection while maintaining quality.
 
-The mutable surface: writing-config.yaml (style parameters + prompt rules)
+The mutable surface: the active client's writing-config.yaml (style parameters + prompt rules)
 The fixed evaluation: humanness_score.py (objective checklist + subjective feel)
 The metric: composite_score (lower = more human, like val_bpb)
 
 Usage:
     python3 optimize_loop.py --topic "AI Agent" --iterations 10
+    python3 optimize_loop.py --client winson --topic "AI Agent" --iterations 10
     python3 optimize_loop.py --topic "AI Agent" --iterations 5 --verbose
 
 Architecture:
@@ -27,7 +28,7 @@ Architecture:
 
 Requirements:
     - ANTHROPIC_API_KEY in environment (for article generation + LLM judge)
-    - writing-config.yaml in skill root (created on first run with defaults)
+    - clients/<client>/writing-config.yaml (created on first run with defaults)
 """
 
 import argparse
@@ -40,9 +41,7 @@ from pathlib import Path
 
 import yaml
 
-SKILL_DIR = Path(__file__).parent.parent
-CONFIG_PATH = SKILL_DIR / "writing-config.yaml"
-RESULTS_PATH = SKILL_DIR / "optimization-results.tsv"
+from client_context import resolve_client_context
 
 DEFAULT_CONFIG = {
     "persona": "科技媒体资深编辑，写了八年公众号，对AI行业有深度认知",
@@ -62,19 +61,20 @@ DEFAULT_CONFIG = {
 }
 
 
-def ensure_config():
+def ensure_config(config_path: Path):
     """Create default writing-config.yaml if it doesn't exist."""
-    if not CONFIG_PATH.exists():
-        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+    if not config_path.exists():
+        with open(config_path, "w", encoding="utf-8") as f:
             yaml.dump(DEFAULT_CONFIG, f, allow_unicode=True, default_flow_style=False)
-        print(f"Created default config: {CONFIG_PATH}")
-    return yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
+        print(f"Created default config: {config_path}")
+    return yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
 
 def score_article(article_path: str) -> dict:
     """Run humanness_score.py on an article. Returns parsed result."""
+    skill_dir = Path(__file__).resolve().parent.parent
     result = subprocess.run(
-        ["python3", str(SKILL_DIR / "scripts" / "humanness_score.py"), article_path, "--json"],
+        ["python3", str(skill_dir / "scripts" / "humanness_score.py"), article_path, "--json"],
         capture_output=True, text=True
     )
     if result.returncode != 0:
@@ -83,10 +83,10 @@ def score_article(article_path: str) -> dict:
     return json.loads(result.stdout)
 
 
-def log_result(iteration: int, composite: float, config_summary: str, status: str, description: str):
+def log_result(results_path: Path, iteration: int, composite: float, config_summary: str, status: str, description: str):
     """Append result to TSV log."""
-    header_needed = not RESULTS_PATH.exists()
-    with open(RESULTS_PATH, "a", encoding="utf-8") as f:
+    header_needed = not results_path.exists()
+    with open(results_path, "a", encoding="utf-8") as f:
         if header_needed:
             f.write("iteration\ttimestamp\tcomposite\tstatus\tdescription\tconfig_change\n")
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -101,10 +101,20 @@ def print_banner(iteration: int, total: int):
 
 def main():
     parser = argparse.ArgumentParser(description="WeWrite optimization loop")
+    parser.add_argument("--client", help="Client name under clients/<client>")
     parser.add_argument("--topic", required=True, help="Article topic for testing")
     parser.add_argument("--iterations", type=int, default=10, help="Number of iterations")
     parser.add_argument("--verbose", "-v", action="store_true")
     args = parser.parse_args()
+
+    try:
+        client_ctx = resolve_client_context(args.client, purpose="run optimization loop")
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    config_path = client_ctx.path("writing-config.yaml")
+    results_path = client_ctx.path("optimization-results.tsv")
 
     print(f"""
 ╔══════════════════════════════════════════════════════╗
@@ -117,7 +127,14 @@ def main():
 ╚══════════════════════════════════════════════════════╝
 """)
 
-    config = ensure_config()
+    print(
+        f"Client: {client_ctx.name}"
+        f"{' (legacy root layout)' if client_ctx.is_legacy else ''}"
+    )
+    print(f"Config path: {config_path}")
+    print(f"Results path: {results_path}")
+
+    config = ensure_config(config_path)
 
     print("This script provides the FRAMEWORK for optimization.")
     print("To run the full loop, you need:")
@@ -130,7 +147,7 @@ def main():
     print()
     print("Run this loop via Claude Code / OpenClaw agent:")
     print()
-    print("  Agent reads writing-config.yaml")
+    print(f"  Agent reads {config_path}")
     print("  → generates article with those rules")
     print("  → scores with: python3 scripts/humanness_score.py article.md --json")
     print("  → proposes a config change")
@@ -138,7 +155,7 @@ def main():
     print("  → scores again")
     print("  → if composite_score decreased → commit config change")
     print("  → if composite_score same/worse → rollback")
-    print("  → logs to optimization-results.tsv")
+    print(f"  → logs to {results_path}")
     print("  → repeats")
     print()
     print("To test scoring on an existing article:")

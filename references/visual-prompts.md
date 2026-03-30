@@ -50,7 +50,7 @@
 - 避免生成文字（AI 绘图工具生成的文字通常是乱码）
 - 指定 `no text, no letters, no words` 防止出现乱码文字
 - 为标题留出干净的空间：`clean space on the left/right/bottom for text overlay`
-- 色调与客户 style.yaml 的 cover_style 对齐
+- 色调与客户 `{client_dir}/style.yaml` 的 cover_style 对齐
 - 风格关键词要具体：不说"好看"，说"flat design, soft gradient, minimalist"
 
 ---

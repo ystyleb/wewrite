@@ -1,7 +1,7 @@
 # Onboard（首次设置）
 
 **触发条件**：
-- Step 1 发现 `style.yaml` 不存在
+- Step 1 发现 `{client_dir}/style.yaml` 不存在
 - 用户明确说"重新设置风格"、"修改配置"
 
 ## Phase 1: 收集信息（交互式问答）
@@ -49,7 +49,7 @@
 
 **快捷路径**：
 - 如果用户直接甩了一段描述（如"我做科技自媒体，风格像虎嗅"），直接从中提取所有能提取的字段，只补问缺的
-- 如果用户说"不设置"、"用默认的"、"直接写" → 复制 `{skill_dir}/style.example.yaml` 为 `style.yaml`，跳过所有问答
+- 如果用户说"不设置"、"用默认的"、"直接写" → 复制 `{skill_dir}/style.example.yaml` 为 `{client_dir}/style.yaml`，跳过所有问答
 
 ```
 参考: {skill_dir}/references/style-template.md（字段说明和可用主题列表）
@@ -57,24 +57,24 @@
 
 ## Phase 2: 生成配置
 
-用收集到的信息自动生成 `{skill_dir}/style.yaml`。
+用收集到的信息自动生成 `{client_dir}/style.yaml`。
 
 同时确保以下文件/目录存在（不存在则创建）：
-- `{skill_dir}/history.yaml` → 初始化为 `articles: []`
-- `{skill_dir}/corpus/` → 空目录
-- `{skill_dir}/lessons/` → 空目录
+- `{client_dir}/history.yaml` → 初始化为 `articles: []`
+- `{client_dir}/corpus/` → 空目录
+- `{client_dir}/lessons/` → 空目录
 
-生成完成后，**把 style.yaml 的内容展示给用户看一遍**，问"这个配置 OK 吗？有什么要改的？"。用户确认后继续。
+生成完成后，**把 `{client_dir}/style.yaml` 的内容展示给用户看一遍**，问"这个配置 OK 吗？有什么要改的？"。用户确认后继续。
 
 ## Phase 3: Playbook（可选，不阻断）
 
 问用户："你有没有之前写过的公众号文章？如果有 20 篇以上，我可以从中学习你的写作风格，以后写出来的文章会更像你。"
 
-- **用户有语料** → 告知将文章（.md 或 .txt）放入 `{skill_dir}/corpus/`，然后运行：
+- **用户有语料** → 告知将文章（.md 或 .txt）放入 `{client_dir}/corpus/`，然后运行：
   ```bash
-  python3 {skill_dir}/scripts/build_playbook.py
+  python3 {skill_dir}/scripts/build_playbook.py --client {client}
   ```
-  按脚本输出逐批阅读文章，提取风格特征，生成 `playbook.md`。
+  按脚本输出逐批阅读文章，提取风格特征，生成 `{client_dir}/playbook.md`。
 
 - **用户没有语料 / 暂时不想弄** → 完全正常，跳过。告知用户："没问题，先用通用风格写，后续你可以随时说'学习我的修改'来让我逐渐适应你的风格。"
 

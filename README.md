@@ -33,7 +33,7 @@
 
 ## 写作人格
 
-像选排版主题一样选写作风格。在 `style.yaml` 里一行配置：
+像选排版主题一样选写作风格。在 `clients/<client>/style.yaml` 里一行配置：
 
 ```yaml
 writing_persona: "midnight-friend"
@@ -140,7 +140,7 @@ pip install -r requirements.txt
 cp config.example.yaml config.yaml
 ```
 
-填入微信公众号 `appid`/`secret`（推送需要）和图片 API key（生图需要）。不配也能用——自动降级为本地 HTML + 输出图片提示词。
+填入默认微信公众号 `appid`/`secret`（推送需要）和图片 API key（生图需要）。不配也能用——自动降级为本地 HTML + 输出图片提示词。单客户场景推荐直接用 `clients/default/`。
 
 ## 快速开始
 
@@ -198,12 +198,23 @@ wewrite/
 │   ├── learn-edits.md          # 学习飞轮流程
 │   └── effect-review.md        # 效果复盘流程
 │
-├── output/                   # 生成的文章
-├── corpus/                   # 历史语料（可选）
-└── lessons/                  # 修改记录（自动生成）
+├── clients/                  # 多客户数据目录（官方布局）
+│   └── <client>/
+│       ├── style.yaml          # 客户风格配置
+│       ├── history.yaml        # 发布历史 + 数据回填
+│       ├── playbook.md         # 从人工修改/语料学习出的规则
+│       ├── writing-config.yaml # optimize loop 产物（可选）
+│       ├── corpus/             # 历史语料（可选）
+│       └── lessons/            # 修改记录（自动生成）
+│
+├── output/                   # 生成的文章（output/<client>/...）
+├── style.yaml                # 旧版单客户兼容路径
+├── history.yaml              # 旧版单客户兼容路径
+├── playbook.md               # 旧版单客户兼容路径
+└── writing-config.yaml       # 旧版单客户兼容路径
 ```
 
-运行时自动生成（不入 git）：`style.yaml`、`history.yaml`、`playbook.md`、`writing-config.yaml`
+运行时自动生成（不入 git）：`clients/<client>/style.yaml`、`clients/<client>/history.yaml`、`clients/<client>/playbook.md`、`clients/<client>/writing-config.yaml`
 
 ## 工作流程
 
@@ -239,7 +250,7 @@ python3 scripts/humanness_score.py article.md --verbose
 python3 scripts/optimize_loop.py --topic "AI Agent" --iterations 10
 ```
 
-框架开源，但优化后的 `writing-config.yaml` 不入 git——每个用户跑出自己的最优参数。
+框架开源，但优化后的 `clients/<client>/writing-config.yaml` 不入 git——每个用户跑出自己的最优参数。
 
 ## Toolkit 独立使用
 

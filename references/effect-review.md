@@ -3,12 +3,12 @@
 **触发**：用户问"文章数据怎么样"、"效果复盘"、"看看表现"
 
 ```bash
-python3 {skill_dir}/scripts/fetch_stats.py --days 7
+python3 {skill_dir}/scripts/fetch_stats.py --client {client} --days 7
 ```
 
 脚本会：
 1. 调微信数据分析 API 拉取最近 7 天的文章阅读数据
-2. 匹配 history.yaml 中的文章记录
+2. 匹配 `{client_dir}/history.yaml` 中的文章记录
 3. 回填 stats 字段（阅读量、分享量、点赞量、阅读率）
 
 回填后，分析数据并给出建议：

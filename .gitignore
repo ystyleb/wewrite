@@ -1,7 +1,7 @@
 # Credentials
 config.yaml
 
-# User data (generated at runtime, not tracked)
+# Legacy single-client data (backward compatibility only)
 style.yaml
 history.yaml
 playbook.md
@@ -16,7 +16,7 @@ optimization-results.tsv
 output/
 !output/.gitkeep
 
-# Legacy client directories
+# Client-local data (official multi-client layout)
 clients/
 
 # macOS

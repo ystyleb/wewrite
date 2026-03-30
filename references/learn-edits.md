@@ -8,13 +8,13 @@
 
 ## 1. 获取 draft 和 final
 
-- **draft**：`output/` 下最新的 .md 文件（按修改时间排序，`ls -t output/*.md | head -1`）
+- **draft**：`output/{client}/` 下最新的 .md 文件（按修改时间排序，`ls -t output/{client}/*.md | head -1`）
 - **final**：用户提供修改后的版本。主动引导用户："请把你改好的文章全文粘贴给我，或者告诉我文件路径。如果你是在微信后台编辑器里改的，可以全选复制后直接粘贴到这里。"
 
 ## 2. 运行 diff 分析
 
 ```bash
-python3 {skill_dir}/scripts/learn_edits.py --draft {draft_path} --final {final_path}
+python3 {skill_dir}/scripts/learn_edits.py --client {client} --draft {draft_path} --final {final_path}
 ```
 
 ## 3. 分析并记录
@@ -28,24 +28,24 @@ python3 {skill_dir}/scripts/learn_edits.py --draft {draft_path} --final {final_p
 - **标题修改**：标题风格偏好
 - **语气调整**：整体语气的偏移方向
 
-将分类结果写入 `lessons/` 下的 diff YAML 文件的 edits 和 patterns 字段。
+将分类结果写入 `{client_dir}/lessons/` 下的 diff YAML 文件的 edits 和 patterns 字段。
 
 ## 4. 自动触发 Playbook 更新
 
 每积累 5 次 lessons，自动触发 playbook 更新：
 
 ```bash
-python3 {skill_dir}/scripts/learn_edits.py --summarize
+python3 {skill_dir}/scripts/learn_edits.py --client {client} --summarize
 ```
 
 脚本输出所有 lessons 的汇总数据。**Agent 必须执行以下步骤完成闭环**：
 
 1. 读取 summarize 输出，找出反复出现的 pattern（≥2 次）
-2. 读取当前 `{skill_dir}/playbook.md`（如果不存在则从零创建）
-3. **将 pattern 转化为可执行的写作规则**写入 playbook.md：
+2. 读取当前 `{client_dir}/playbook.md`（如果不存在则从零创建）
+3. **将 pattern 转化为可执行的写作规则**写入 `{client_dir}/playbook.md`：
    - 不要写"用户偏好简短段落"（描述性，不可执行）
    - 要写"段落不超过 80 字，长段必须在 3 句内换行"（指令性，可执行）
    - 每条规则必须是写作时能直接遵循的具体指令
-4. 保存 playbook.md
+4. 保存 `{client_dir}/playbook.md`
 
-**验证闭环**：playbook.md 更新后，下次写作时"Playbook 优先"规则会自动加载新 pattern，初稿会反映用户偏好。
+**验证闭环**：`{client_dir}/playbook.md` 更新后，下次写作时"Playbook 优先"规则会自动加载新 pattern，初稿会反映用户偏好。

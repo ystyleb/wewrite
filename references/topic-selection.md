@@ -7,8 +7,8 @@
 ## 输入
 
 - 热点列表（JSON，包含 title/source/hot/url/description）
-- 客户 style.yaml 中的：topics、target_audience、blacklist、content_style
-- 客户 history.yaml 中的：已发布文章的 topic_keywords 和 stats（如有）
+- 客户 `{client_dir}/style.yaml` 中的：topics、target_audience、blacklist、content_style
+- 客户 `{client_dir}/history.yaml` 中的：已发布文章的 topic_keywords 和 stats（如有）
 - seo_keywords.py 输出：关键词的 seo_score 和 related_keywords（如有）
 
 ## 评估维度
@@ -74,12 +74,12 @@
 - SEO 友好度：{seo_score}/10 — {引用 seo_keywords.py 的数据，如"百度 8 + 360 10，相关词丰富"}
 - 推荐框架：{痛点型/故事型/清单型/对比型/热点解读型}
 - 推荐理由：{为什么这个值得写}
-- 历史标记：{如果 history.yaml 中近 7 天有相同关键词，标注"⚠️ 近期已覆盖类似话题"}
+- 历史标记：{如果 `{client_dir}/history.yaml` 中近 7 天有相同关键词，标注"⚠️ 近期已覆盖类似话题"}
 ```
 
 ## 历史去重规则
 
-读取 history.yaml 中最近 30 天的文章记录，提取所有 topic_keywords。
+读取 `{client_dir}/history.yaml` 中最近 30 天的文章记录，提取所有 topic_keywords。
 
 - 如果选题的核心关键词在**最近 7 天**已出现 → 综合评分扣 3 分，并标注"⚠️ 近期已覆盖"
 - 如果在**7-30 天**内出现 → 综合评分扣 1 分，标注"ℹ️ 月内有相关文章"
@@ -87,7 +87,7 @@
 
 ## 历史偏好参考
 
-如果 history.yaml 中有带 stats 的文章（阅读量、分享量），分析表现最好的文章的共同特征：
+如果 `{client_dir}/history.yaml` 中有带 stats 的文章（阅读量、分享量），分析表现最好的文章的共同特征：
 - 哪种框架类型表现好？→ 推荐框架时优先
 - 哪种标题风格表现好？（数字型/反直觉/痛点）→ 拟标题时参考
 - 不要强制套用——只作为参考信号，选题本身的质量仍然最重要

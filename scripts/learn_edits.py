@@ -3,13 +3,14 @@
 Learn from human edits by diffing AI draft vs published final.
 
 Compares the original AI-generated article with the human-edited version,
-categorizes the changes, and saves lessons to lessons/.
+categorizes the changes, and saves lessons to the active client's lessons/.
 
-When 5+ lessons accumulate, outputs a prompt for the Agent to update playbook.md.
+When 5+ lessons accumulate, outputs a prompt for the Agent to update that client's playbook.md.
 
 Usage:
     python3 learn_edits.py --draft path/to/draft.md --final path/to/final.md
-    python3 learn_edits.py --summarize   # summarize all lessons
+    python3 learn_edits.py --client winson --draft path/to/draft.md --final path/to/final.md
+    python3 learn_edits.py --client winson --summarize   # summarize one client's lessons
 
 The script does structural analysis; the Agent (LLM) interprets the diffs
 and writes the lesson YAML + playbook updates.
@@ -25,7 +26,7 @@ from pathlib import Path
 
 import yaml
 
-SKILL_DIR = Path(__file__).parent.parent
+from client_context import infer_client_from_path, resolve_client_context
 
 
 def load_text(path: str) -> str:
@@ -111,9 +112,8 @@ def compute_diff(draft: str, final: str) -> dict:
     }
 
 
-def save_diff_for_analysis(diff_result: dict, draft_path: str, final_path: str):
+def save_diff_for_analysis(diff_result: dict, draft_path: str, final_path: str, lessons_dir: Path):
     """Save diff data for Agent to analyze and write lessons."""
-    lessons_dir = SKILL_DIR / "lessons"
     lessons_dir.mkdir(parents=True, exist_ok=True)
 
     date_str = datetime.now().strftime("%Y-%m-%d")
@@ -148,17 +148,15 @@ def save_diff_for_analysis(diff_result: dict, draft_path: str, final_path: str):
     return diff_file
 
 
-def count_lessons() -> int:
+def count_lessons(lessons_dir: Path) -> int:
     """Count existing lesson files."""
-    lessons_dir = SKILL_DIR / "lessons"
     if not lessons_dir.exists():
         return 0
     return len(list(lessons_dir.glob("*-diff*.yaml")))
 
 
-def summarize_lessons():
+def summarize_lessons(lessons_dir: Path):
     """Load all lessons and output for Agent to update playbook."""
-    lessons_dir = SKILL_DIR / "lessons"
     if not lessons_dir.exists():
         print("No lessons directory found.")
         return
@@ -179,15 +177,30 @@ def summarize_lessons():
     print(json.dumps(all_lessons, ensure_ascii=False, indent=2))
 
 
+def resolve_client_for_edits(client: str | None, draft_path: str | None, final_path: str | None):
+    inferred = client or infer_client_from_path(draft_path) or infer_client_from_path(final_path)
+    return resolve_client_context(inferred, purpose="learn from edits")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Learn from human edits")
+    parser.add_argument("--client", help="Client name under clients/<client>")
     parser.add_argument("--draft", help="Path to AI draft")
     parser.add_argument("--final", help="Path to human-edited final")
     parser.add_argument("--summarize", action="store_true", help="Summarize all lessons")
     args = parser.parse_args()
 
+    try:
+        client_ctx = resolve_client_for_edits(args.client, args.draft, args.final)
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    lessons_dir = client_ctx.path("lessons")
+    playbook_path = client_ctx.path("playbook.md")
+
     if args.summarize:
-        summarize_lessons()
+        summarize_lessons(lessons_dir)
         return
 
     if not args.draft or not args.final:
@@ -205,6 +218,10 @@ def main():
     print("=" * 60)
     print("EDIT ANALYSIS")
     print("=" * 60)
+    print(
+        f"Client: {client_ctx.name}"
+        f"{' (legacy root layout)' if client_ctx.is_legacy else ''}"
+    )
 
     if diff_result["title_changed"]:
         print(f"\n标题修改:")
@@ -231,11 +248,11 @@ def main():
             print(f"  + {line[:80]}")
 
     # Save for Agent analysis
-    diff_file = save_diff_for_analysis(diff_result, args.draft, args.final)
+    diff_file = save_diff_for_analysis(diff_result, args.draft, args.final, lessons_dir)
     print(f"\nDiff saved to: {diff_file}")
 
     # Check if playbook update should be triggered
-    lesson_count = count_lessons()
+    lesson_count = count_lessons(lessons_dir)
     print(f"Total lessons: {lesson_count}")
 
     if lesson_count >= 5 and lesson_count % 5 == 0:
@@ -243,8 +260,8 @@ def main():
         print("PLAYBOOK UPDATE TRIGGERED")
         print(f"{'='*60}")
         print(f"{lesson_count} lessons accumulated. Agent should:")
-        print(f"1. Read all lessons: python3 learn_edits.py --summarize")
-        print(f"2. Read current playbook: playbook.md")
+        print(f"1. Read all lessons: python3 learn_edits.py --client {client_ctx.name} --summarize")
+        print(f"2. Read current playbook: {playbook_path}")
         print(f"3. Update playbook with recurring patterns from lessons")
 
     # Output instructions for Agent
@@ -266,7 +283,7 @@ Read the draft and final versions, then analyze the edits:
 4. Update {diff_file} with the edits and patterns lists.
 
 5. If this is a recurring pattern (seen in previous lessons too),
-   consider updating playbook.md.
+   consider updating {playbook_path}.
 """)
 
 

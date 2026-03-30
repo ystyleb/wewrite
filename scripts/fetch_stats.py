@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Fetch WeChat article statistics and update history.yaml.
+Fetch WeChat article statistics and update the active client's history.yaml.
 
 Uses WeChat Data Analytics API to pull article performance:
   - /datacube/getarticlesummary (daily summary)
@@ -8,6 +8,7 @@ Uses WeChat Data Analytics API to pull article performance:
 
 Usage:
     python3 fetch_stats.py
+    python3 fetch_stats.py --client winson
     python3 fetch_stats.py --days 7
 
 Requires: wechat appid/secret in config.yaml (skill root or toolkit dir)
@@ -22,7 +23,8 @@ from pathlib import Path
 import requests
 import yaml
 
-SKILL_DIR = Path(__file__).parent.parent
+from client_context import SKILL_DIR, resolve_client_context
+
 TOOLKIT_CONFIG_PATHS = [
     SKILL_DIR / "config.yaml",                      # skill root
     SKILL_DIR / "toolkit" / "config.yaml",           # toolkit dir
@@ -89,11 +91,17 @@ def fetch_article_total(token: str, date: str) -> list[dict]:
     return data["list"]
 
 
-def update_history(stats_list: list[dict]):
+def _load_client_style(style_path: Path) -> dict:
+    if not style_path.exists():
+        return {}
+    with open(style_path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
+
+
+def update_history(stats_list: list[dict], history_path: Path):
     """Match stats to history.yaml entries and update."""
-    history_path = SKILL_DIR / "history.yaml"
     if not history_path.exists():
-        print("No history.yaml found.")
+        print(f"No history.yaml found at {history_path}.")
         return
 
     with open(history_path, "r", encoding="utf-8") as f:
@@ -138,19 +146,32 @@ def update_history(stats_list: list[dict]):
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch WeChat article stats")
+    parser.add_argument("--client", help="Client name under clients/<client>")
     parser.add_argument("--days", type=int, default=3, help="Days to look back")
     args = parser.parse_args()
 
+    try:
+        client_ctx = resolve_client_context(args.client, purpose="fetch stats")
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
     cfg = _load_toolkit_config()
+    style = _load_client_style(client_ctx.path("style.yaml"))
     wechat_cfg = cfg.get("wechat", {})
-    appid = wechat_cfg.get("appid")
-    secret = wechat_cfg.get("secret")
+    client_wechat = style.get("wechat", {})
+    appid = client_wechat.get("appid") or wechat_cfg.get("appid")
+    secret = client_wechat.get("secret") or wechat_cfg.get("secret")
 
     if not appid or not secret:
         print("Error: wechat appid/secret not found in config.yaml", file=sys.stderr)
         sys.exit(1)
 
     token = _get_access_token(appid, secret)
+    print(
+        f"Using client: {client_ctx.name}"
+        f"{' (legacy root layout)' if client_ctx.is_legacy else ''}"
+    )
     print(f"Fetching stats for last {args.days} days...")
 
     all_stats = []
@@ -162,7 +183,7 @@ def main():
             all_stats.extend(stats)
 
     if all_stats:
-        update_history(all_stats)
+        update_history(all_stats, client_ctx.path("history.yaml"))
     else:
         print("No stats data found for the specified period.")
 

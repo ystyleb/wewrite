@@ -42,6 +42,7 @@ allowed-tools:
 - `{client_dir}` 指 `{skill_dir}/clients/{client}/`（多客户模式，见 Step 1）
 - 客户级文件（style.yaml、history.yaml、playbook.md）在 `{client_dir}` 下
 - 共享文件（references/、personas/、scripts/、toolkit/）在 `{skill_dir}` 下
+- 根目录下的 `style.yaml`、`history.yaml`、`playbook.md`、`writing-config.yaml` 仅作为旧版单客户兼容路径；新流程默认不再写入这些位置
 
 **进度追踪**：执行主管道前，必须用 TaskCreate 创建以下任务清单，逐步标记完成，防止漏掉步骤：
 
@@ -191,7 +192,11 @@ WebSearch: "{选题关键词} 数据 报告 2025 2026"
 
 **优先级**：playbook.md > persona > writing-guide.md。writing-guide 是底线（禁用词等），persona 在此基础上特化风格参数，playbook 是用户个性化的最终覆盖。
 
-**4c. 写文章**：
+**4c. 内容洞见分析**（调用 viral-writer-skill 的 11 维度框架）：
+
+在动笔前，对选题执行 viral-writer-skill 的 11 个内容洞见维度分析：核心观点、副观点、说服策略、情绪触发点、金句、情感曲线、情感层次、论证多样性、视角转化、语言风格、互动钩子。分析结果作为 4d 写作的输入约束。
+
+**4d. 写文章**：
 - H1 标题（20-28 字） + H2 结构，1500-2500 字
 - 真实素材锚定：Step 3b 的素材分散嵌入各 H2 段落
 - **写作人格**：按 4b 加载的人格参数写作（数据呈现方式、个人声音浓度、不确定性表达等）
@@ -199,7 +204,7 @@ WebSearch: "{选题关键词} 数据 报告 2025 2026"
 - 2-3 个编辑锚点：`<!-- ✏️ 编辑建议：在这里加一句你自己的经历/看法 -->`
 - 可选容器语法：`:::dialogue`、`:::timeline`、`:::callout`、`:::quote`
 
-保存到 `{client_dir}/output/{date}-{slug}.md`
+保存到 `{skill_dir}/output/{client}/{date}-{slug}.md`
 
 ---
 

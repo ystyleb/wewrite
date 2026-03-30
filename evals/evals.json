@@ -5,23 +5,23 @@
       "id": 0,
       "name": "first-time-onboard",
       "prompt": "我想用 WeWrite 写公众号文章。我的公众号叫「AI前哨站」，主要写 AI 和科技方向，风格偏轻松有趣，像跟朋友聊天。不用配微信 API，先不配，直接用默认的就行。",
-      "expected_output": "完成 Onboard 流程：通过对话收集信息生成 style.yaml，检测到无 config.yaml 时设置降级标记而非报错停止",
+      "expected_output": "完成 Onboard 流程：通过对话收集信息生成 clients/default/style.yaml，检测到无 config.yaml 时设置降级标记而非报错停止",
       "files": [],
       "assertions": [
         {
           "name": "creates_style_yaml",
           "type": "file_exists",
-          "description": "应在 skill 目录下生成 style.yaml"
+          "description": "应在 clients/default/ 下生成 style.yaml"
         },
         {
           "name": "style_has_required_fields",
           "type": "content_check",
-          "description": "style.yaml 包含 name、topics、tone 字段"
+          "description": "clients/default/style.yaml 包含 name、topics、tone 字段"
         },
         {
-          "name": "no_client_directory",
-          "type": "negative_check",
-          "description": "不应创建 clients/ 子目录（旧模式已移除）"
+          "name": "creates_default_client_directory",
+          "type": "behavior_check",
+          "description": "未指定客户时应创建或使用 clients/default/ 作为单客户默认目录"
         },
         {
           "name": "graceful_no_config",
