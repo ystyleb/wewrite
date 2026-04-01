@@ -28,10 +28,11 @@
 | 文章写作 | 真实信息锚定 + 风格注入 + 编辑锚点 | `references/writing-guide.md` |
 | SEO 优化 | 标题策略 / 摘要 / 关键词 / 标签 | `references/seo-rules.md` |
 | 视觉 AI | 封面 3 创意 + 内文 3-6 配图 | `toolkit/image_gen.py` |
-| 排版发布 | 16 主题 + 微信兼容修复 + 暗黑模式 | `toolkit/cli.py` |
+| 排版发布 | 16+ 主题 + 微信兼容修复 + 暗黑模式 | `toolkit/cli.py` |
 | 效果复盘 | 微信数据分析 API 回填阅读数据 | `references/effect-review.md` |
 | 范文风格库 | SICO 式 few-shot：从你的文章提取风格指纹，写作时注入 | `scripts/extract_exemplar.py` |
 | 风格飞轮 | 学习你的修改，越用越像你 | `references/learn-edits.md` |
+| 排版学习 | 从任意公众号文章 URL 提取排版主题 | `scripts/learn_theme.py` |
 
 ## 写作人格
 
@@ -158,6 +159,7 @@ cp config.example.yaml config.yaml
 你：检查一下                        → 生成报告 + 质量自检
 你：导入范文                        → 建立风格库
 你：查看范文库                      → 查看已导入的范文
+你：学习排版                        → 从公众号文章提取排版主题
 ```
 
 ## 目录结构
@@ -180,17 +182,18 @@ wewrite/
 │   ├── learn_edits.py          # 学习人工修改
 │   ├── humanness_score.py      # 文章质量打分（11 项检测，供自检和 Step 5 使用）
 │   ├── extract_exemplar.py      # 范文风格提取（SICO 式 few-shot 建库）
+│   ├── learn_theme.py           # 从公众号文章 URL 提取排版主题
 │   ├── diagnose.py             # 配置完备度检查
 │   └── build_openclaw.py       # SKILL.md → OpenClaw 格式转换
 │
 ├── toolkit/                  # Markdown → 微信工具链
-│   ├── cli.py                  # CLI（preview / publish / gallery / themes / image-post）
+│   ├── cli.py                  # CLI（preview / publish / gallery / themes / image-post / learn-theme）
 │   ├── converter.py            # Markdown → 内联样式 HTML + 微信兼容修复
 │   ├── theme.py                # YAML 主题引擎
 │   ├── publisher.py            # 微信草稿箱 API + 小绿书图片帖
 │   ├── wechat_api.py           # access_token / 图片上传
-│   ├── image_gen.py            # AI 图片生成（doubao / OpenAI）
-│   └── themes/                 # 16 套排版主题（含暗黑模式）
+│   ├── image_gen.py            # AI 图片生成（doubao / OpenAI / Gemini）
+│   └── themes/                 # 16+ 排版主题（含暗黑模式，可从文章学习新增）
 │
 ├── personas/                 # 5 套写作人格预设（含朱雀实测数据）
 │
@@ -288,6 +291,9 @@ python3 scripts/extract_exemplar.py --list                   # 查看范文库
 
 # 文章质量检查
 python3 scripts/humanness_score.py article.md --verbose
+
+# 从公众号文章学习排版主题
+python3 scripts/learn_theme.py https://mp.weixin.qq.com/s/xxxx --name my-style
 ```
 
 ## License

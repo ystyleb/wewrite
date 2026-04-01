@@ -39,6 +39,7 @@ description: |
 - 用户说"学习我的修改" → `读取: {baseDir}/references/learn-edits.md`。支持两种来源：
   - **本地修改**（默认）：用户在 `output/` 的 markdown 文件中修改
   - **微信草稿箱同步**：`python3 {baseDir}/scripts/learn_edits.py --from-wechat`，自动从草稿箱拉回最新内容，与本地原文做纯文本 diff
+- 用户说"学习排版"/"学排版" → `python3 {baseDir}/scripts/learn_theme.py <url> --name <name>`，用户需提供一个公众号文章 URL 和主题名称。提取完成后提示用户设置 `style.yaml` 的 `theme` 字段。
 - 用户说"看看文章数据" → `读取: {baseDir}/references/effect-review.md`
 - 用户说"检查一下"/"自检"/"这篇文章怎么样" → 对最近一篇生成的文章（或用户指定的文章）执行自检，输出生成报告：
 
@@ -459,6 +460,7 @@ python3 {baseDir}/toolkit/cli.py preview {markdown} --theme {theme} --no-open -o
 | 换成 XX 主题 | 重新渲染 |
 | 看看文章数据 | `读取: {baseDir}/references/effect-review.md` |
 | 学习我的修改 | `读取: {baseDir}/references/learn-edits.md`。支持本地 markdown 修改和微信草稿箱同步（`--from-wechat`） |
+| 学习排版 / 学排版 | `python3 {baseDir}/scripts/learn_theme.py <url> --name <name>` |
 | 做一个小绿书/图片帖 | `python3 {baseDir}/toolkit/cli.py image-post img1.jpg img2.jpg -t "标题"` |
 | 检查一下 / 自检 / 这篇文章怎么样 | 生成报告（生成档案 + 质量检查，见辅助功能） |
 | 导入范文 / 建范文库 | `python3 {baseDir}/scripts/extract_exemplar.py article.md` |
