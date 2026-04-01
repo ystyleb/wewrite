@@ -16,6 +16,10 @@ optimization-results.tsv
 output/
 !output/.gitkeep
 
+# Exemplar library (user-specific content)
+references/exemplars/*.md
+references/exemplars/index.yaml
+
 # Client-local data (official multi-client layout)
 clients/
 
@@ -27,8 +31,13 @@ __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
-dist/
+dist/*
+!dist/openclaw/
 build/
+
+# Internal dev docs
+docs/
+CLAUDE.md
 
 # IDE
 .vscode/

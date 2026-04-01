@@ -8,8 +8,8 @@
 
 ```
 "写一篇公众号文章"
-  → 抓热点 → 选题评分 → 素材采集 → 框架选择
-  → 写作（真实信息锚定 + 7层去AI痕迹 + 编辑锚点）
+  → 抓热点 → 选题评分 → 框架选择 → 素材采集 → 内容增强
+  → 写作（真实信息锚定 + 风格注入 + 编辑锚点）
   → SEO优化 → AI配图 → 微信排版 → 推送草稿箱
 ```
 
@@ -22,13 +22,15 @@
 | 热点抓取 | 微博 + 头条 + 百度实时热搜 | `scripts/fetch_hotspots.py` |
 | SEO 评分 | 百度 + 360 搜索量化评分 | `scripts/seo_keywords.py` |
 | 选题生成 | 10 选题 × 3 维度评分 + 历史去重 | `references/topic-selection.md` |
-| 素材采集 | WebSearch 真实数据/引述/案例 | SKILL.md Step 3b |
-| 框架生成 | 5 套写作骨架（痛点/故事/清单/对比/热点） | `references/frameworks.md` |
-| 文章写作 | 真实信息锚定 + 7 层去 AI + 编辑锚点 | `references/writing-guide.md` |
+| 素材采集 | WebSearch 真实数据/引述/案例 | SKILL.md Step 3.2 |
+| 框架生成 | 7 套写作骨架（痛点/故事/清单/对比/热点解读/纯观点/复盘） | `references/frameworks.md` |
+| 内容增强 | 按框架类型自动匹配：角度发现/密度强化/细节锚定/真实体感 | `references/content-enhance.md` |
+| 文章写作 | 真实信息锚定 + 风格注入 + 编辑锚点 | `references/writing-guide.md` |
 | SEO 优化 | 标题策略 / 摘要 / 关键词 / 标签 | `references/seo-rules.md` |
 | 视觉 AI | 封面 3 创意 + 内文 3-6 配图 | `toolkit/image_gen.py` |
 | 排版发布 | 16 主题 + 微信兼容修复 + 暗黑模式 | `toolkit/cli.py` |
 | 效果复盘 | 微信数据分析 API 回填阅读数据 | `references/effect-review.md` |
+| 范文风格库 | SICO 式 few-shot：从你的文章提取风格指纹，写作时注入 | `scripts/extract_exemplar.py` |
 | 风格飞轮 | 学习你的修改，越用越像你 | `references/learn-edits.md` |
 
 ## 写作人格
@@ -39,31 +41,26 @@
 writing_persona: "midnight-friend"
 ```
 
-| 人格 | 适合 | 朱雀实测 |
+| 人格 | 适合 | 风格特点 |
 |------|------|---------|
-| `midnight-friend` | 个人号/自媒体 | **39% 人工 / 10% AI** |
-| `warm-editor` | 生活/文化/情感 | 10% 人工 / 33% AI |
-| `industry-observer` | 行业媒体/分析 | 10% 人工 / 40% AI |
-| `sharp-journalist` | 新闻/评论 | 28% 疑似AI / 72% AI |
-| `cold-analyst` | 财经/投研 | 26% 疑似AI / 74% AI |
+| `midnight-friend` | 个人号/自媒体 | 极度口语化、高自我怀疑、每段第一人称 |
+| `warm-editor` | 生活/文化/情感 | 温暖叙事、故事嵌套数据、柔和情绪弧 |
+| `industry-observer` | 行业媒体/分析 | 中性分析、数据先行、稳中带刺 |
+| `sharp-journalist` | 新闻/评论 | 犀利简洁、数据驱动、强观点 |
+| `cold-analyst` | 财经/投研 | 冷静克制、逻辑链条、风险意识强 |
 
 每个人格定义了语气浓度、数据呈现方式、情绪弧线、不确定性表达模板等参数。详见 `personas/` 目录。
 
-## 关于 AI 检测
+## 内容质量
 
-WeWrite 生成的是**高质量初稿**。我们用朱雀 AI 实测了从无优化到完整 pipeline 的效果：
+WeWrite 的目标不是"骗过 AI 检测"，而是**写出值得读的文章**。核心机制：
 
-```
-100% AI（无优化）→ 52% AI（加 WebSearch 素材）→ 10% AI（midnight-friend 人格）
-```
-
-策略是让你的编辑成本最低：
-1. **写作人格**：选择个人声音浓度高的人格，开箱即用就能降低 AI 特征
+1. **内容增强**：根据框架类型自动执行不同策略——热点文找反直觉角度、干货文强化信息密度、故事文锚定真实细节、对比文注入真实用户体感
 2. **素材采集**：自动 WebSearch 真实数据/引述/案例，锚定在文章中（不编造）
-3. **编辑锚点**：在 2-3 个关键位置标记"在这里加一句你自己的话"
-4. **学习飞轮**：每次你编辑后说"学习我的修改"，下次初稿更接近你的风格
-
-个人声音越强的人格，AI 检测通过率越高。专业/客观风格的人格（journalist、analyst）建议配合编辑锚点使用。
+3. **范文风格库**：导入你已发布的文章，写作时自动注入你的风格指纹（句长节奏、情绪表达、转折方式）
+4. **编辑锚点**：在 2-3 个关键位置标记"在这里加一句你自己的话"
+5. **学习飞轮**：每次你编辑后说"学习我的修改"，下次初稿更接近你的风格
+6. **文章自检**：说"检查一下"，查看生成档案（用了什么框架/人格/策略）+ 质量检查（具体到哪句话该怎么改）
 
 ## 排版引擎
 
@@ -122,17 +119,21 @@ python3 toolkit/cli.py themes
 
 ## 安装
 
+**Claude Code**：
+
 ```bash
-git clone https://github.com/oaker-io/wewrite.git
-cd wewrite
-pip install -r requirements.txt
+git clone --depth 1 https://github.com/oaker-io/wewrite.git ~/.claude/skills/wewrite
+cd ~/.claude/skills/wewrite && pip install -r requirements.txt
 ```
 
-### 挂载为 Skill
+**OpenClaw**：
 
-**Claude Code**：`cp -r wewrite ~/.claude/skills/wewrite`
+```bash
+git clone --depth 1 https://github.com/oaker-io/wewrite.git ~/.openclaw/skills/wewrite
+cd ~/.openclaw/skills/wewrite && pip install -r requirements.txt
+```
 
-**OpenClaw**：`cp -r wewrite /path/to/openclaw/skills/wewrite`
+安装后 skill 会在每次运行时自动检查新版本。有更新时说"更新"即可升级。
 
 ### 配置（可选）
 
@@ -154,26 +155,33 @@ cp config.example.yaml config.yaml
 你：换成 sspai 主题               → 切换主题
 你：看看文章数据怎么样            → 效果复盘
 你：做一个小绿书                  → 图片帖（横滑轮播）
+你：检查一下                        → 生成报告 + 质量自检
+你：导入范文                        → 建立风格库
+你：查看范文库                      → 查看已导入的范文
 ```
 
 ## 目录结构
 
 ```
 wewrite/
-├── SKILL.md                  # 主管道（273行，Step 1-8）
+├── SKILL.md                  # 主管道（Step 1-8）
 ├── config.example.yaml       # API 配置模板
 ├── style.example.yaml        # 风格配置模板
-├── writing-config.example.yaml # 写作参数模板（可用 optimize loop 调优）
+├── writing-config.example.yaml # 写作参数模板
 ├── requirements.txt
 │
-├── scripts/                  # 数据采集 + 优化
+├── dist/openclaw/            # OpenClaw 兼容版（CI 自动构建）
+│
+├── scripts/                  # 数据采集 + 诊断 + 构建
 │   ├── fetch_hotspots.py       # 多平台热点抓取
 │   ├── seo_keywords.py         # SEO 关键词分析
 │   ├── fetch_stats.py          # 微信文章数据回填
 │   ├── build_playbook.py       # 从历史文章生成 Playbook
 │   ├── learn_edits.py          # 学习人工修改
-│   ├── humanness_score.py      # 文章"人味"打分器（客观 checklist + LLM 判官）
-│   └── optimize_loop.py        # autoresearch 风格迭代优化框架
+│   ├── humanness_score.py      # 文章质量打分（11 项检测，供自检和 Step 5 使用）
+│   ├── extract_exemplar.py      # 范文风格提取（SICO 式 few-shot 建库）
+│   ├── diagnose.py             # 配置完备度检查
+│   └── build_openclaw.py       # SKILL.md → OpenClaw 格式转换
 │
 ├── toolkit/                  # Markdown → 微信工具链
 │   ├── cli.py                  # CLI（preview / publish / gallery / themes / image-post）
@@ -187,13 +195,16 @@ wewrite/
 ├── personas/                 # 5 套写作人格预设（含朱雀实测数据）
 │
 ├── references/               # Agent 按需加载
-│   ├── writing-guide.md        # 写作规范 + 7 层去 AI 痕迹 + 自检清单
-│   ├── frameworks.md           # 5 种写作框架
+│   ├── writing-guide.md        # 写作规范 + 质量检查规则
+│   ├── frameworks.md           # 7 种写作框架（痛点/故事/清单/对比/热点解读/纯观点/复盘）
+│   ├── content-enhance.md     # 内容增强策略（角度发现/密度强化/细节锚定/真实体感）
 │   ├── topic-selection.md      # 选题评估规则
 │   ├── seo-rules.md            # 微信 SEO 规则
 │   ├── visual-prompts.md       # 视觉 AI 提示词规范
 │   ├── wechat-constraints.md   # 微信平台限制 + 自动修复
 │   ├── style-template.md       # 风格配置字段 + 16 主题列表
+│   ├── exemplar-seeds.yaml     # 通用人类写作模式种子（无范文库时的 fallback）
+│   ├── exemplars/              # 用户范文风格库（自动生成，不入 git）
 │   ├── onboard.md              # 首次设置流程
 │   ├── learn-edits.md          # 学习飞轮流程
 │   └── effect-review.md        # 效果复盘流程
@@ -214,7 +225,7 @@ wewrite/
 └── writing-config.yaml       # 旧版单客户兼容路径
 ```
 
-运行时自动生成（不入 git）：`clients/<client>/style.yaml`、`clients/<client>/history.yaml`、`clients/<client>/playbook.md`、`clients/<client>/writing-config.yaml`
+运行时自动生成（不入 git）：`clients/<client>/style.yaml`、`clients/<client>/history.yaml`、`clients/<client>/playbook.md`、`clients/<client>/writing-config.yaml`、`references/exemplars/*.md`
 
 ## 工作流程
 
@@ -223,11 +234,11 @@ Step 1  环境检查 + 加载风格（不存在则 Onboard）
   ↓
 Step 2  热点抓取 → 历史去重 + SEO → 选题
   ↓
-Step 3  框架选择 → 素材采集（WebSearch 真实数据）
+Step 3  框架选择 → 素材采集（WebSearch 真实数据）→ 内容增强（按框架类型匹配策略）
   ↓
-Step 4  维度随机化 → 写作（7层规范 + 真实素材锚定 + 编辑锚点）
+Step 4  维度随机化 → 范文风格注入 → 写作（内容增强约束 + 真实素材锚定 + 编辑锚点）→ 快速自检
   ↓
-Step 5  SEO 优化 → 去 AI 逐层验证（9 项自检）
+Step 5  SEO 优化 → 质量验证
   ↓
 Step 6  视觉 AI（封面 + 内文配图）
   ↓
@@ -238,16 +249,13 @@ Step 8  写入历史 → 回复用户（含编辑建议 + 飞轮提示）
 
 默认全自动。说"交互模式"可在选题/框架/配图处暂停确认。
 
-## 优化循环（实验性）
+## 参数调优
 
-借鉴 [autoresearch](https://github.com/karpathy/autoresearch) 的 change→score→keep/rollback 模式，WeWrite 提供写作参数自动调优框架：
+借鉴 [autoresearch](https://github.com/karpathy/autoresearch) 的 change→score→keep/rollback 模式，WeWrite 支持写作参数自动调优。在对话中说"优化参数"即可启动，Agent 会自动迭代 `clients/<client>/writing-config.yaml` 中的参数。
 
 ```bash
 # 对一篇文章打分（客观 checklist + 主观 LLM 判官）
 python3 scripts/humanness_score.py article.md --verbose
-
-# 迭代优化写作参数
-python3 scripts/optimize_loop.py --topic "AI Agent" --iterations 10
 ```
 
 框架开源，但优化后的 `clients/<client>/writing-config.yaml` 不入 git——每个用户跑出自己的最优参数。
@@ -272,6 +280,14 @@ python3 scripts/fetch_hotspots.py --limit 20
 
 # SEO 分析
 python3 scripts/seo_keywords.py --json "AI大模型" "科技股"
+
+# 范文风格库
+python3 scripts/extract_exemplar.py article.md              # 导入范文
+python3 scripts/extract_exemplar.py *.md -s "你的公众号"     # 批量导入
+python3 scripts/extract_exemplar.py --list                   # 查看范文库
+
+# 文章质量检查
+python3 scripts/humanness_score.py article.md --verbose
 ```
 
 ## License
